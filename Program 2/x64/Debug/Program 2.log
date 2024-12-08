@@ -1,0 +1,8 @@
+﻿  computation.c
+  input_output.c
+  main.c
+  Generating Code...
+C:\Users\shish\Desktop\CSC 362\COding Sample\Program 2\Program 2\input_output.c(14,25): warning C4028: formal parameter 1 different from declaration
+C:\Users\shish\Desktop\CSC 362\COding Sample\Program 2\Program 2\input_output.c(20,73): warning C4028: formal parameter 3 different from declaration
+  header_file.h
+  Program 2.vcxproj -> C:\Users\shish\Desktop\CSC 362\COding Sample\Program 2\x64\Debug\Program 2.exe

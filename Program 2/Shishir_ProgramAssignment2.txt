@@ -1,0 +1,197 @@
+/*
+Name - Shishir Ghorashainee
+Programming Assignment 2 
+Prof. Richard K. Fox
+*/
+
+/*
+    This program reads city data from a file and calculates various data, such as population density, pollution, traffic, crime, expense,
+    number of highways.Using these data, it computes a livability value for each city and displays the results. The code keeps track of 
+    the most livable city and provides a summary of all cities, including the average livability and the name of the best city.
+    In the main.c file we have declared necessary variables, used a file pointer to open and read a file, an output format
+    for the heading, once the the file is closed once its read and summary function is called which gives us a report for the number of cities, its livability value and the name of the most livable city.
+*/
+
+// main.c
+#include "header_file.h" // this is a user defined header file which has necessary function prototypes and the user defined constants. 
+
+int main() {
+    // Declaring all the variables needed. 
+    char city[60], best_city[60];   // These char variables store the name of cities and the best city. 
+    int population=0, square_mileage=0, pollution_amount=0, crime=0, expense=0, highways=0, number_of_cities=0; //These int variables store the city population, area in sq. miles, pollution, number of crime, expenses, the number of major highways, and the number of cities. 
+    double total_livability = 0, best_livability = 0, city_livability = 0; // This holds the value for total_livability, best livability, and current city livability. 
+    double pop_density = 0;   // To store the density of poplation value after being called inside a function. 
+    double pollution_rating=0, traffic_rating=0, crime_rating=0, expense_rating=0;  // To hold values after they're calculated. 
+
+    // Opening the input file. 
+    FILE* fptr = fopen("cities2.txt", "r"); //opening the file in Read only mode 
+    if (fptr == NULL) {    // Gives an error message if the file doesn't exist.
+        printf("Error opening file.\n");
+        return 1;
+    }
+
+    printf("City                 Livability   Pop Density\n");    // Creating the headings for the output with a proper format.
+
+
+    // Using While loop, we loop through each city from the given input file. 
+    while (input(fptr, city, &population, &square_mileage, &pollution_amount, &crime, &expense, &highways) != EOF) { 
+        pop_density = population_density(population, square_mileage); // Population density is computed
+
+        //We compute various ratings based on what factors a city has. 
+        compute(pollution_amount, crime, expense, highways, pop_density, &pollution_rating, &traffic_rating, &crime_rating, &expense_rating);
+
+        //We calculate the city livavility value. 
+        city_livability = livability(pollution_rating, traffic_rating, crime_rating, expense_rating);
+
+        //output results for the current city name, livilability score, and population density. 
+        output(city, city_livability, pop_density);
+
+        ////In this, we update the number of cities, total livability, and also we check if the current city has the best livability. 
+        update(&number_of_cities, &total_livability, best_city, &best_livability, city, city_livability);
+    }
+
+    fclose(fptr);  // Close the input file
+
+    // Outputs the number of cities, total_livability, best city and best livability. And, the Average livabilty is also displayed.
+    summary(number_of_cities, total_livability, best_city, best_livability);
+
+    return 0;
+}
+
+/*
+
+//Output for Cities2.txt 
+
+
+City                 Livability   Pop Density
+Atlanta                40.54         752.98
+Boston                 23.63        1022.35
+Chicago                17.94         935.06
+Cincinnati             71.77         449.88
+Dallas                 53.11         714.73
+Houston                50.50         706.82
+Las_Vegas              47.95         817.78
+Los_Angeles             4.58        1134.00
+Minneapolis            73.19         404.78
+New_York_City           4.76        1096.80
+Seattle                55.27         650.97
+St_Louis               75.83         332.31
+Washington_DC          24.02         921.97
+
+
+Of 13 cities, the average livability is 41.78
+The most livable city is St_Louis with a livability of 75.83
+
+*/
+
+
+
+
+// input_output.c
+
+/* This c file contains functions for handling input, output and summary of the calculation.   */
+
+#include "header_file.h" // this is a user defined header file which has necessary function prototypes and the user defined constant. 
+
+// using input function to read data from the given file 
+int input(FILE* fptr, char* city, int* population, int* square_mileage, int* pollution_amount, int* crime, int* expense, int* number_of_highways) {
+    //Reads different data about the city from te file and and returns it.
+    return fscanf(fptr, "%s %d %d %d %d %d %d", city, population, square_mileage, pollution_amount, crime, expense, number_of_highways);
+}
+
+// Output function to  display information about the city 
+void output(const char* city, double livability, double population_density) {
+    // Print the city's name, livability, and population density using a specific formatted output. 
+    printf("%-16s %11.2f %14.2f\n", city, livability, population_density);
+}
+
+// Summary function to display summary info
+void summary(int number_of_cities, double total_livability, const char* best_city, double best_livability) {
+    //Average livability value out of # number of cities is calculated.
+    printf("\n\nOf %d cities, the average livability is %.2f \n", number_of_cities, total_livability / number_of_cities);
+    // Most livabile city name with its livability value is displayed. 
+    printf("The most livable city is %s with a livability of %.2f\n", best_city, best_livability);
+}
+
+
+
+// computation.c
+
+/*
+    The c file contains functions that perform calculations related to city livability.
+    It includes functions to calculate population density, different ratings like pollution, traffic, crime, and expense. Also, the total livability is calculated. .
+    We can determine how livable each city is based on the input data.
+*/
+
+
+#include "header_file.h" // this is a user defined header file which has necessary function prototypes and the user defined constant. 
+
+// Compute population density using the function 
+double population_density(int population, int square_mileage) {
+    return (double)population / square_mileage;     // we divide the city population by its area and return the value. 
+}
+
+// Funtion to calculate various ratings like pollution, traffic, crime, and expense rating respectively using the given formula. 
+void compute(int pollution_amount, int crime, int expense, int number_of_highways, double population_density, double* pollution_rating, double* traffic_rating, double* crime_rating, double* expense_rating) {
+    *pollution_rating = (pollution_amount * population_density) / POLLUTION_CONSTANT;
+    *traffic_rating = (population_density * TRAFFIC_CONSTANT) / number_of_highways;
+    *crime_rating = (crime * population_density) / CRIME_CONSTANT;
+    *expense_rating = (expense * population_density) / EXPENSE_CONSTANT;
+}
+
+// Function to calculate livability value using the given formula and dividing by user defined constant. 
+double livability(double pollution_rating, double traffic_rating, double crime_rating, double expense_rating) {
+    //Based on the formula this function calculates the livability value and returns the livability value as double.  
+    return 100 - (pollution_rating + traffic_rating + crime_rating + expense_rating) / LIVABILITY_CONSTANT;
+}
+
+// Update function to track livability data using strcpy
+void update(int* number_of_cities, double* total_livability, char* best_city, double* best_livability, char* city, double city_livability) {
+    (*number_of_cities)++;  // Increasing the number of cities
+    *total_livability += city_livability;  // Change the total livability value. 
+    //If condition to check if the current city livability is greater than the best livability city.
+    if (city_livability > *best_livability) {     
+        *best_livability = city_livability;   //if the condition holds true, then we update the best livability city. 
+        strcpy(best_city, city);  // We copy the contents from the current city name and put it into best city.
+    }
+}
+
+
+
+// header_file.h
+/*This header file contains header files like stdio.h, string.h needed for other c files as well as the function prototypes */
+
+#define _CRT_SECURE_NO_WARNINGS  // We declare this to avoid a compiler warning that would cause the compiler to abandon its compilation
+#include <stdio.h>
+#include <string.h>  //Various string functions like strcpy is defined in this headerfile. 
+
+//Declaring CONSTANTS for different calculations. 
+#define POLLUTION_CONSTANT 1112.2
+#define TRAFFIC_CONSTANT 1.7
+#define CRIME_CONSTANT 872.6
+#define EXPENSE_CONSTANT 1617.1
+#define LIVABILITY_CONSTANT 13.81
+
+// All the given function prototypes
+
+// Reads city data using pointer to point (city_name, population, square_mileage, pollution_amount, crime, expenses, number of highways) from a file.
+int input(FILE* fptr, char* city, int* population, int* square_mileage, int* pollution_amount, int* crime, int* expense, int* number_of_highways);
+
+// Calculate the population density by dividing city population by area in square miles. 
+double population_density(int population, int square_mileage);
+
+// Computes pollution amount, traffic, crime, and expense ratings for a city based on input data. And the parameters with pointers are passed by using their address. 
+void compute(int pollution_amount, int crime, int expense, int number_of_highways, double population_density, double* pollution_rating, double* traffic_rating, double* crime_rating, double* expense_rating);
+
+// this function calculates the overall livability value for a city by combining all the ratings and substracts it from 100.
+double livability(double pollution_rating, double traffic_rating, double crime_rating, double expense_rating);
+
+// this output function displays the city s name, livability value, and population density in a formatted way.
+void output(char* city, double livability, double population_density);
+
+// Updates totals for number of cities, total livability. Also, the best city and its livability are recorded. 
+void update(int* number_of_cities, double* total_livability, char* best_city, double* best_livability, char* city, double city_livability);
+
+//summary function gives us a report for the number of cities, its livability value and the name of the most livable city.
+void summary(int number_of_cities, double total_livability, char* best_city, double best_livability);
+
